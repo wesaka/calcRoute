@@ -183,8 +183,15 @@ def calculate(origin, destination, hour):
             lowest_time = final_station.time_to_station
             best_route = final_station
 
-    # TODO get what are the line changes for output
     end_time = datetime.strptime(hour, '%H:%M') + timedelta(minutes=best_route.time_to_station)
+
+    # Check if end time is within working hours
+    if end_time.hour < 6:
+        raise Exception('Error - The end-time is outside of the working hours ({} -> {:02d}:{:02d})'.format(
+            hour,
+            end_time.hour,
+            end_time.minute)
+        )
 
     printing_value = '{}{}\n{}{}\n{}\n{}\n{:02d}:{:02d}\n{:02d}:{:02d}\n{}'.format(
         best_route.origin_letter,
@@ -203,18 +210,41 @@ def calculate(origin, destination, hour):
 
 
 if __name__ == "__main__":
+    # Parse the arguments from the command line
     parser = argparse.ArgumentParser(description='Calculating time between metro stations', add_help=False)
     parser.add_argument('-o', default=-1, type=int, help='The origin station (only its number!)')
     parser.add_argument('-d', default=-1, type=int, help='The destination station (only its number!)')
     parser.add_argument('-h', help='The time of departure')
 
-    # TODO Error handling from inputs
-
     args = parser.parse_args()
-    origin = args.o
-    destination = args.d
-    hour = args.h
 
-    calculate(origin, destination, hour)
+    # Handle the possible input errors
+    try:
+        # Both origin and destination can only be numbers between 1 and 14 (inclusive)
+        # Origin
+        origin = args.o
+        if type(origin) != int:
+            raise ValueError('Error - Origin can only be a number.')
 
+        if origin < 1 or origin > 14:
+            raise ValueError('Error - Origin can only be a number between 1 and 14 (inclusive).')
 
+        # Destination
+        destination = args.d
+        if type(destination) != int:
+            raise ValueError('Error - Destination can only be a number.')
+
+        if destination < 1 or destination > 14:
+            raise ValueError('Error - Destination can only be a number between 1 and 14 (inclusive).')
+
+        # Time of departure
+        hour = args.h
+        datetime_hour = datetime.strptime(hour, '%H:%M')
+        if datetime_hour.hour < 6:
+            raise ValueError('Error - The metro working hours are between 06:00 and 00:00')
+
+        calculate(origin, destination, hour)
+
+    except Exception as e:
+        print(e)
+        exit()
