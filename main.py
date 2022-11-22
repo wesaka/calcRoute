@@ -118,12 +118,13 @@ def prettify_station_list(station_list):
     return [prettify_station(station) for station in station_list]
 
 
-def detect_line_changes(station_list):
+def detect_line_changes(starting, station_list):
     line_changes = []
 
     # If station list is empty, the inputs origin and destination were equal
     # Get the next station
-    current = station_list[0]
+
+    current = starting
     for station in station_list:
         if station - current <= -100 or station - current >= 100:
             # Line change
@@ -206,10 +207,13 @@ def calculate(origin, destination, hour):
         end_time.hour,
         end_time.minute,
         *divmod(best_route.time_to_station, 60),
-        detect_line_changes(best_route.path)
+        detect_line_changes(((int(ord(best_route.origin_letter) - ord('A')) + 1) * 100) + best_route.origin_number, best_route.path)
     )
 
     print(printing_value)
+    f = open("result.txt", "w")
+    f.write(printing_value)
+    f.close()
 
 
 if __name__ == "__main__":
@@ -226,38 +230,46 @@ if __name__ == "__main__":
 
     except argparse.ArgumentError as ae:
         # Handle the possible errors in argument quantities
-        print('Error - The argument {} faced the following error: "{}"'.format(ae.argument_name, ae.message))
-        exit()
+        raise('Error - The argument {} faced the following error: "{}"'.format(ae.argument_name, ae.message))
 
 
     # Handle the possible input errors
+    try:
+        # Both origin and destination can only be numbers between 1 and 14 (inclusive)
+        # Origin
+        origin = args.o
+        if type(origin) != int:
+            raise ValueError('Error - Origin can only be a number.')
 
-    # Both origin and destination can only be numbers between 1 and 14 (inclusive)
-    # Origin
-    origin = args.o
-    if type(origin) != int:
-        raise ValueError('Error - Origin can only be a number.')
+        if origin < 1 or origin > 14:
+            raise ValueError('Error - Origin can only be a number between 1 and 14 (inclusive).')
 
-    if origin < 1 or origin > 14:
-        raise ValueError('Error - Origin can only be a number between 1 and 14 (inclusive).')
+        # Destination
+        destination = args.d
+        if type(destination) != int:
+            raise ValueError('Error - Destination can only be a number.')
 
-    # Destination
-    destination = args.d
-    if type(destination) != int:
-        raise ValueError('Error - Destination can only be a number.')
+        if destination < 1 or destination > 14:
+            raise ValueError('Error - Destination can only be a number between 1 and 14 (inclusive).')
 
-    if destination < 1 or destination > 14:
-        raise ValueError('Error - Destination can only be a number between 1 and 14 (inclusive).')
+        if origin == destination:
+            raise ValueError('The start and end stations cannot be the same. '
+                             'It takes 0 minutes to get there if you want to know :P')
 
-    if origin == destination:
-        raise ValueError('The start and end stations cannot be the same. '
-                         'It takes 0 minutes to get there if you want to know :P')
+        # Time of departure
+        hour = args.h
+        datetime_hour = datetime.strptime(hour, '%H:%M')
+        if datetime_hour.hour < 6:
+            raise ValueError('Error - The metro working hours are between 06:00 and 00:00')
 
-    # Time of departure
-    hour = args.h
-    datetime_hour = datetime.strptime(hour, '%H:%M')
-    if datetime_hour.hour < 6:
-        raise ValueError('Error - The metro working hours are between 06:00 and 00:00')
+        calculate(origin, destination, hour)
 
-    calculate(origin, destination, hour)
+    except Exception as e:
+        f = open("logfile.txt", "w")
+        f.write('{} - {}'.format(datetime.now(), e))
+        f.close()
+
+        print('Error - Check generated logfile.txt for more information')
+        # Uncomment this line to get the error raised in the IDE (development purposes)
+        # raise e
 
