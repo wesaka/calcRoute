@@ -120,6 +120,9 @@ def prettify_station_list(station_list):
 
 def detect_line_changes(station_list):
     line_changes = []
+
+    # If station list is empty, the inputs origin and destination were equal
+    # Get the next station
     current = station_list[0]
     for station in station_list:
         if station - current <= -100 or station - current >= 100:
@@ -198,7 +201,7 @@ def calculate(origin, destination, hour):
         best_route.origin_number,
         best_route.destination_letter,
         best_route.destination_number,
-        prettify_station_list(best_route.path),
+        ['{}{}'.format(best_route.origin_letter, best_route.origin_number)] + prettify_station_list(best_route.path),
         hour,
         end_time.hour,
         end_time.minute,
@@ -211,40 +214,50 @@ def calculate(origin, destination, hour):
 
 if __name__ == "__main__":
     # Parse the arguments from the command line
-    parser = argparse.ArgumentParser(description='Calculating time between metro stations', add_help=False)
-    parser.add_argument('-o', default=-1, type=int, help='The origin station (only its number!)')
-    parser.add_argument('-d', default=-1, type=int, help='The destination station (only its number!)')
-    parser.add_argument('-h', help='The time of departure')
+    parser = argparse.ArgumentParser(description='Calculating time between metro stations', add_help=False, exit_on_error=False)
+    parser.add_argument('-o', metavar='Origin Station', default=-1, type=int,
+                        help='The origin station (only its number!)')
+    parser.add_argument('-d', metavar='Destination Station', default=-1, type=int,
+                        help='The destination station (only its number!)')
+    parser.add_argument('-h', metavar='Time of Departure', help='The time of departure')
 
-    args = parser.parse_args()
+    try:
+        args = parser.parse_args()
+
+    except argparse.ArgumentError as ae:
+        # Handle the possible errors in argument quantities
+        print('Error - The argument {} faced the following error: "{}"'.format(ae.argument_name, ae.message))
+        exit()
+
 
     # Handle the possible input errors
-    try:
-        # Both origin and destination can only be numbers between 1 and 14 (inclusive)
-        # Origin
-        origin = args.o
-        if type(origin) != int:
-            raise ValueError('Error - Origin can only be a number.')
 
-        if origin < 1 or origin > 14:
-            raise ValueError('Error - Origin can only be a number between 1 and 14 (inclusive).')
+    # Both origin and destination can only be numbers between 1 and 14 (inclusive)
+    # Origin
+    origin = args.o
+    if type(origin) != int:
+        raise ValueError('Error - Origin can only be a number.')
 
-        # Destination
-        destination = args.d
-        if type(destination) != int:
-            raise ValueError('Error - Destination can only be a number.')
+    if origin < 1 or origin > 14:
+        raise ValueError('Error - Origin can only be a number between 1 and 14 (inclusive).')
 
-        if destination < 1 or destination > 14:
-            raise ValueError('Error - Destination can only be a number between 1 and 14 (inclusive).')
+    # Destination
+    destination = args.d
+    if type(destination) != int:
+        raise ValueError('Error - Destination can only be a number.')
 
-        # Time of departure
-        hour = args.h
-        datetime_hour = datetime.strptime(hour, '%H:%M')
-        if datetime_hour.hour < 6:
-            raise ValueError('Error - The metro working hours are between 06:00 and 00:00')
+    if destination < 1 or destination > 14:
+        raise ValueError('Error - Destination can only be a number between 1 and 14 (inclusive).')
 
-        calculate(origin, destination, hour)
+    if origin == destination:
+        raise ValueError('The start and end stations cannot be the same. '
+                         'It takes 0 minutes to get there if you want to know :P')
 
-    except Exception as e:
-        print(e)
-        exit()
+    # Time of departure
+    hour = args.h
+    datetime_hour = datetime.strptime(hour, '%H:%M')
+    if datetime_hour.hour < 6:
+        raise ValueError('Error - The metro working hours are between 06:00 and 00:00')
+
+    calculate(origin, destination, hour)
+
