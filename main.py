@@ -180,9 +180,8 @@ def calculate(origin, destination, hour):
                                     )
 
     # Find the intended destination station from between all the results
-    best_route = final_result[0]
+    lowest_time = 2000
     for final_station in final_result:
-        lowest_time = 2000
         if final_station.destination_number == destination and final_station.time_to_station < lowest_time:
             lowest_time = final_station.time_to_station
             best_route = final_station
