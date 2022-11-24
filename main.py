@@ -206,7 +206,8 @@ def calculate(origin, destination, hour):
         end_time.hour,
         end_time.minute,
         *divmod(best_route.time_to_station, 60),
-        detect_line_changes(((int(ord(best_route.origin_letter) - ord('A')) + 1) * 100) + best_route.origin_number, best_route.path)
+        detect_line_changes(((int(ord(best_route.origin_letter) - ord('A')) + 1) * 100) + best_route.origin_number,
+                            best_route.path)
     )
 
     print(printing_value)
@@ -215,25 +216,23 @@ def calculate(origin, destination, hour):
     f.close()
 
 
+def check_input(error):
+    return error
+
+
 if __name__ == "__main__":
     # Parse the arguments from the command line
-    parser = argparse.ArgumentParser(description='Calculating time between metro stations', add_help=False, exit_on_error=False)
+    parser = argparse.ArgumentParser(description='Calculating time between metro stations', add_help=False,
+                                     exit_on_error=False)
     parser.add_argument('-o', metavar='Origin Station', default=-1, type=int,
                         help='The origin station (only its number!)')
     parser.add_argument('-d', metavar='Destination Station', default=-1, type=int,
                         help='The destination station (only its number!)')
     parser.add_argument('-h', metavar='Time of Departure', help='The time of departure')
 
-    try:
-        args = parser.parse_args()
-
-    except argparse.ArgumentError as ae:
-        # Handle the possible errors in argument quantities
-        raise('Error - The argument {} faced the following error: "{}"'.format(ae.argument_name, ae.message))
-
-
     # Handle the possible input errors
     try:
+        args = parser.parse_args()
         # Both origin and destination can only be numbers between 1 and 14 (inclusive)
         # Origin
         origin = args.o
@@ -264,6 +263,8 @@ if __name__ == "__main__":
         calculate(origin, destination, hour)
 
     except Exception as e:
+        check_input(e)
+
         f = open("logfile.txt", "w")
         f.write('{} - {}'.format(datetime.now(), e))
         f.close()
@@ -271,4 +272,3 @@ if __name__ == "__main__":
         print('Error - Check generated logfile.txt for more information')
         # Uncomment this line to get the error raised in the IDE (development purposes)
         # raise e
-
