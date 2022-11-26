@@ -216,26 +216,17 @@ def calculate(origin, destination, hour):
     f.close()
 
 
-def check_input(error):
-    return error
+def check_input(arguments):
+    """Handle the possible errors.
 
+    Takes the unparsed result from argparse and will sort any error inside this function.
 
-if __name__ == "__main__":
-    # Parse the arguments from the command line
-    parser = argparse.ArgumentParser(description='Calculating time between metro stations', add_help=False,
-                                     exit_on_error=False)
-    parser.add_argument('-o', metavar='Origin Station', default=-1, type=int,
-                        help='The origin station (only its number!)')
-    parser.add_argument('-d', metavar='Destination Station', default=-1, type=int,
-                        help='The destination station (only its number!)')
-    parser.add_argument('-h', metavar='Time of Departure', help='The time of departure')
+    :returns The string describing the error"""
 
-    # Handle the possible input errors
     try:
-        args = parser.parse_args()
         # Both origin and destination can only be numbers between 1 and 14 (inclusive)
         # Origin
-        origin = args.o
+        origin = arguments.o
         if type(origin) != int:
             raise ValueError('Error - Origin can only be a number.')
 
@@ -243,7 +234,7 @@ if __name__ == "__main__":
             raise ValueError('Error - Origin can only be a number between 1 and 14 (inclusive).')
 
         # Destination
-        destination = args.d
+        destination = arguments.d
         if type(destination) != int:
             raise ValueError('Error - Destination can only be a number.')
 
@@ -255,7 +246,7 @@ if __name__ == "__main__":
                              'It takes 0 minutes to get there if you want to know :P')
 
         # Time of departure
-        hour = args.h
+        hour = arguments.h
         datetime_hour = datetime.strptime(hour, '%H:%M')
         if datetime_hour.hour < 6:
             raise ValueError('Error - The metro working hours are between 06:00 and 00:00')
@@ -263,12 +254,33 @@ if __name__ == "__main__":
         calculate(origin, destination, hour)
 
     except Exception as e:
-        check_input(e)
-
         f = open("logfile.txt", "w")
         f.write('{} - {}'.format(datetime.now(), e))
         f.close()
 
-        print('Error - Check generated logfile.txt for more information')
+        return 'Error - Check generated logfile.txt for more information'
         # Uncomment this line to get the error raised in the IDE (development purposes)
         # raise e
+
+    return 'OK - Arguments parsed with success.'
+
+
+def parse_arguments():
+    # Parse the arguments from the command line
+    parser = argparse.ArgumentParser(description='Calculating time between metro stations', add_help=False,
+                                     exit_on_error=False)
+    parser.add_argument('-o', metavar='Origin Station', default=-1, type=int,
+                        help='The origin station (only its number!)')
+    parser.add_argument('-d', metavar='Destination Station', default=-1, type=int,
+                        help='The destination station (only its number!)')
+    parser.add_argument('-h', metavar='Time of Departure', help='The time of departure')
+
+    args = parser.parse_args()
+
+    print(check_input(args))
+
+    return 'OK - Arguments successfully parsed'
+
+
+if __name__ == "__main__":
+    parse_arguments()
